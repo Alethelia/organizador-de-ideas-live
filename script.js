@@ -8,6 +8,7 @@ const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
 const floatingIdea = document.getElementById('floatingIdea');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const minimizedBubble = document.getElementById('minimizedBubble');
+const flowContainer = document.getElementById('flowContainer');
 
 let inactivityTimeout;
 let drag = false;
@@ -112,7 +113,17 @@ async function organizeIdea() {
     return;
   }
 
-  const fullPrompt = `Organiza de forma detallada y clara el siguiente contenido respetando toda la información, sin omitir nada, en formato de listas y sublistas con etiquetas HTML (<ul> y <li>):\n\n${idea}`;
+  const fullPrompt = `Organiza de forma detallada y clara el siguiente contenido respetando toda la información, sin omitir nada. Devuelve el resultado en formato JSON como este ejemplo:
+{
+  "nodes": [
+    { "id": 1, "title": "Preparar ingredientes", "content": "Reunir pan, queso, mayonesa.", "next": [2] },
+    { "id": 2, "title": "Armar el sandwich", "content": "Poner queso y mayonesa entre dos panes.", "next": [3] },
+    { "id": 3, "title": "Tostar", "content": "Llevar al sartén o sandwichera hasta dorar.", "next": [] }
+  ]
+}
+
+Contenido a organizar:
+${idea}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -127,14 +138,28 @@ async function organizeIdea() {
         max_tokens: 1500
       })
     });
+
     const data = await response.json();
+    console.log('Respuesta completa:', data);
+
     const content = data.choices?.[0]?.message?.content || '❌ Error al procesar';
-    localStorage.setItem('organizedContent', content);
-    renderOrganized(content);
+    console.log('Contenido recibido:', content);
+
+    try {
+      const json = JSON.parse(content);
+      console.log('JSON parseado correctamente:', json);
+      renderFlow(json);
+      resultDiv.innerHTML = '';
+    } catch (e) {
+      console.warn('No es un JSON válido, mostrando como texto.');
+      renderOrganized(content);
+    }
+    
   } catch (err) {
     alert('❌ Error: ' + err.message);
   }
 }
+
 
 sendBtn.addEventListener('click', organizeIdea);
 clearBtn.addEventListener('click', () => {
@@ -153,3 +178,75 @@ document.addEventListener('mousemove', resetInactivityTimer);
 renderOrganized(localStorage.getItem('organizedContent'));
 loadApiKey();
 resetInactivityTimer();
+function renderFlow(json) {
+  flowContainer.innerHTML = ''; // Limpia antes de pintar
+
+  if (!json.nodes || !Array.isArray(json.nodes)) {
+    flowContainer.innerHTML = '<p>❌ No se pudo interpretar el flujo.</p>';
+    return;
+  }
+
+  json.nodes.forEach(node => {
+    const card = document.createElement('div');
+    card.className = 'flow-card';
+
+    const title = document.createElement('h3');
+    title.textContent = node.title;
+
+    const content = document.createElement('p');
+    content.textContent = node.content;
+
+    const next = document.createElement('div');
+    next.className = 'next-steps';
+    if (node.next && node.next.length > 0) {
+      next.textContent = 'Siguiente: ' + node.next.join(', ');
+    }
+
+    card.appendChild(title);
+    card.appendChild(content);
+    card.appendChild(next);
+
+    flowContainer.appendChild(card);
+  });
+}
+function renderFlow(json) {
+  flowContainer.innerHTML = ''; // Limpia antes de pintar
+
+  if (!json.nodes || !Array.isArray(json.nodes)) {
+    flowContainer.innerHTML = '<p>❌ No se pudo interpretar el flujo.</p>';
+    return;
+  }
+
+  json.nodes.forEach(node => {
+    const card = document.createElement('div');
+    card.className = 'flow-card';
+
+    const title = document.createElement('h3');
+    title.textContent = node.title;
+
+    const content = document.createElement('p');
+    content.textContent = node.content;
+
+    const next = document.createElement('div');
+    next.className = 'next-steps';
+    if (node.next && node.next.length > 0) {
+      next.textContent = 'Siguiente: ' + node.next.join(', ');
+    }
+
+    card.appendChild(title);
+    card.appendChild(content);
+    card.appendChild(next);
+
+    // Bloqueo/desbloqueo de selección
+    let timer;
+    card.addEventListener('dblclick', () => {
+      card.style.userSelect = 'text';
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        card.style.userSelect = 'none';
+      }, 10000); // 10 segundos
+    });
+
+    flowContainer.appendChild(card);
+  });
+}
