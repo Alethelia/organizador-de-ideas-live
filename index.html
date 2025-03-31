@@ -118,7 +118,7 @@
       flex-direction: column;
       gap: 0.5rem;
       z-index: 999;
-      transition: opacity 0.5s ease, width 0.3s ease, height 0.3s ease;
+      transition: opacity 0.5s ease;
     }
 
     .floating-idea textarea {
@@ -127,24 +127,31 @@
       resize: none;
     }
 
-    .minimized {
-      width: 50px !important;
-      height: 50px !important;
-      overflow: hidden;
-      padding: 0;
+    #minimizeBtn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      padding: 0 0.5rem;
+      font-size: 1.2rem;
+      border-radius: 4px;
+    }
+
+    .minimized-bubble {
+      position: fixed;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       background: var(--primary-color);
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 999;
       cursor: grab;
-      user-select: none;
     }
 
-    .minimized::after {
-      content: '+';
-      color: white;
-      font-size: 1.5rem;
+    .minimized-bubble img {
+      width: 30px;
+      height: 30px;
       pointer-events: none;
     }
 
@@ -176,7 +183,11 @@
 
     <div class="floating-idea" id="floatingIdea">
       <textarea id="ideaInput" placeholder="Escribe tu idea aquí..."></textarea>
-      <button id="minimizeBtn">Minimizar</button>
+      <button id="minimizeBtn">_</button>
+    </div>
+
+    <div class="minimized-bubble" id="minimizedBubble" style="display: none;">
+      <img src="./assets/minimized-icon.png" alt="Icono">
     </div>
   </main>
 
@@ -190,14 +201,14 @@
     const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
     const floatingIdea = document.getElementById('floatingIdea');
     const minimizeBtn = document.getElementById('minimizeBtn');
+    const minimizedBubble = document.getElementById('minimizedBubble');
 
     let inactivityTimeout;
-    let isMinimized = false;
     let drag = false;
 
     function resetInactivityTimer() {
       clearTimeout(inactivityTimeout);
-      if (!isMinimized) {
+      if (floatingIdea.style.display !== 'none') {
         inactivityTimeout = setTimeout(() => {
           minimizeFloating();
         }, 8000);
@@ -205,38 +216,49 @@
     }
 
     function minimizeFloating() {
-      floatingIdea.classList.add('minimized');
-      isMinimized = true;
+      const { left, top } = floatingIdea.getBoundingClientRect();
+      minimizedBubble.style.left = `${left}px`;
+      minimizedBubble.style.top = `${top}px`;
+      floatingIdea.style.display = 'none';
+      minimizedBubble.style.display = 'flex';
     }
 
     function expandFloating() {
-      floatingIdea.classList.remove('minimized');
-      isMinimized = false;
+      const { left, top } = minimizedBubble.getBoundingClientRect();
+      floatingIdea.style.left = `${left}px`;
+      floatingIdea.style.top = `${top}px`;
+      minimizedBubble.style.display = 'none';
+      floatingIdea.style.display = 'flex';
       resetInactivityTimer();
     }
 
-    floatingIdea.addEventListener('mousedown', (e) => {
-      drag = false;
-      let offsetX = e.clientX - floatingIdea.offsetLeft;
-      let offsetY = e.clientY - floatingIdea.offsetTop;
+    function makeDraggable(target, onClick) {
+      let dragStart = false;
 
-      function mouseMoveHandler(e) {
-        floatingIdea.style.left = `${e.clientX - offsetX}px`;
-        floatingIdea.style.top = `${e.clientY - offsetY}px`;
-        drag = true;
-      }
+      target.addEventListener('mousedown', (e) => {
+        dragStart = false;
+        let offsetX = e.clientX - target.offsetLeft;
+        let offsetY = e.clientY - target.offsetTop;
 
-      function mouseUpHandler() {
-        document.removeEventListener('mousemove', mouseMoveHandler);
-        document.removeEventListener('mouseup', mouseUpHandler);
-        if (!drag && isMinimized) {
-          expandFloating();
+        function mouseMoveHandler(e) {
+          target.style.left = `${e.clientX - offsetX}px`;
+          target.style.top = `${e.clientY - offsetY}px`;
+          dragStart = true;
         }
-      }
 
-      document.addEventListener('mousemove', mouseMoveHandler);
-      document.addEventListener('mouseup', mouseUpHandler);
-    });
+        function mouseUpHandler() {
+          document.removeEventListener('mousemove', mouseMoveHandler);
+          document.removeEventListener('mouseup', mouseUpHandler);
+          if (!dragStart && onClick) onClick();
+        }
+
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+      });
+    }
+
+    makeDraggable(floatingIdea);
+    makeDraggable(minimizedBubble, expandFloating);
 
     ideaInput.addEventListener('input', expandFloating);
     minimizeBtn.addEventListener('click', minimizeFloating);
