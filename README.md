@@ -56,8 +56,9 @@ max_tokens: 4096
 
 La burbuja flotante puede moverse también desde el móvil arrastrando con el dedo.
 
----
+## Probar en línea
 
-**Logo:**
+Puedes probar el Organizador de Ideas aquí:
 
-El logo utilizado en este proyecto está disponible en la carpeta `assets/` bajo el nombre `logo.png` y puede ser modificado libremente según tus necesidades.
+https://alethelia.github.io/organizador-de-ideas-live/
+
