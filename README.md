@@ -1,8 +1,12 @@
-# 🧹 Organizador de Ideas
+<p align="center">
+  <img src="./assets/logo.png" alt="Organizador de Ideas" width="200"/>
+</p>
+
+# Organizador de Ideas
 
 Una herramienta visual para organizar y estructurar ideas de manera automática usando la API de OpenAI. Es ideal para escribir, desglosar, estructurar proyectos, flujos o simplemente plasmar ideas rápidamente.
 
-##  Características
+## Características
 
 - Entrada flotante para escribir ideas, minimizable y movible.
 - Visualización de ideas organizadas en tarjetas dinámicas.
@@ -13,7 +17,7 @@ Una herramienta visual para organizar y estructurar ideas de manera automática 
 - Barra de carga durante la organización.
 - API Key configurable y guardada en localStorage.
 
-##  Estructura
+## Estructura
 
 ```
 organizador-de-ideas/
@@ -21,15 +25,16 @@ organizador-de-ideas/
 ├── style.css          # Estilos visuales
 ├── script.js          # Lógica principal
 ├── assets/
+│   └── logo.png           # Logo de la aplicación
 │   └── minimized-icon.png   # Icono flotante
 └── README.md         # Instrucciones
 ```
 
-##  Requisitos
+## Requisitos
 
 - Una API Key de OpenAI (GPT-3.5, GPT-4-turbo o GPT-4o).
 
-##  Uso
+## Uso
 
 1. Descarga los archivos.
 2. Abre `index.html` en tu navegador.
@@ -38,7 +43,7 @@ organizador-de-ideas/
 5. Presiona **Organizar (Ctrl + Enter)**.
 6. Visualiza tus ideas estructuradas automáticamente en tarjetas.
 
-##  Personalización
+## Personalización
 
 Si quieres cambiar el modelo o los límites de tokens, edita el archivo `script.js` en la sección:
 
@@ -47,7 +52,12 @@ model: 'gpt-4o',
 max_tokens: 4096
 ```
 
-##  Soporte móvil
+## Soporte móvil
 
 La burbuja flotante puede moverse también desde el móvil arrastrando con el dedo.
 
+---
+
+**Logo:**
+
+El logo utilizado en este proyecto está disponible en la carpeta `assets/` bajo el nombre `logo.png` y puede ser modificado libremente según tus necesidades.
