@@ -85,7 +85,7 @@ async function organizeIdea() {
     return;
   }
 
-  const fullPrompt = `Organiza de forma detallada y clara el siguiente contenido respetando toda la información, sin omitir nada. Devuelve el resultado en formato JSON como este ejemplo:
+  const fullPrompt = `Organiza de forma detallada y clara el siguiente contenido respetando toda la información, no hagas comentarios fuera del json, sin omitir nada. Devuelve el resultado en formato JSON como este ejemplo:
 {
   "nodes": [
     { "id": 1, "title": "Preparar ingredientes", "content": "Reunir pan, queso, mayonesa.", "next": [2] },
