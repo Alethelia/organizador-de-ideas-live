@@ -52,6 +52,35 @@ function makeDraggable(target, onClick) {
     document.addEventListener('mousemove', mouseMoveHandler);
     document.addEventListener('mouseup', mouseUpHandler);
   });
+
+
+
+
+
+
+  target.addEventListener('touchstart', (e) => {
+    dragStart = false;
+    let touch = e.touches[0];
+    let offsetX = touch.clientX - target.offsetLeft;
+    let offsetY = touch.clientY - target.offsetTop;
+  
+    function touchMoveHandler(e) {
+      let moveTouch = e.touches[0];
+      target.style.left = `${moveTouch.clientX - offsetX}px`;
+      target.style.top = `${moveTouch.clientY - offsetY}px`;
+      dragStart = true;
+    }
+  
+    function touchEndHandler() {
+      document.removeEventListener('touchmove', touchMoveHandler);
+      document.removeEventListener('touchend', touchEndHandler);
+      if (!dragStart && onClick) onClick();
+    }
+  
+    document.addEventListener('touchmove', touchMoveHandler);
+    document.addEventListener('touchend', touchEndHandler);
+  });
+  
 }
 
 makeDraggable(floatingIdea);
