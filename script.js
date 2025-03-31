@@ -1,6 +1,5 @@
 const ideaInput = document.getElementById('ideaInput');
 const promptInput = document.getElementById('promptInput');
-const resultDiv = document.getElementById('result');
 const sendBtn = document.getElementById('sendBtn');
 const clearBtn = document.getElementById('clearBtn');
 const apiKeyInput = document.getElementById('apiKeyInput');
@@ -10,18 +9,8 @@ const minimizeBtn = document.getElementById('minimizeBtn');
 const minimizedBubble = document.getElementById('minimizedBubble');
 const flowContainer = document.getElementById('flowContainer');
 
-let inactivityTimeout;
 let drag = false;
 let selectionTimer;
-
-function resetInactivityTimer() {
-  clearTimeout(inactivityTimeout);
-  if (floatingIdea.style.display !== 'none') {
-    inactivityTimeout = setTimeout(() => {
-      minimizeFloating();
-    }, 8000);
-  }
-}
 
 function minimizeFloating() {
   const { left, top } = floatingIdea.getBoundingClientRect();
@@ -37,7 +26,6 @@ function expandFloating() {
   floatingIdea.style.top = `${top}px`;
   minimizedBubble.style.display = 'none';
   floatingIdea.style.display = 'flex';
-  resetInactivityTimer();
 }
 
 function makeDraggable(target, onClick) {
@@ -70,14 +58,6 @@ makeDraggable(minimizedBubble, expandFloating);
 
 minimizeBtn.addEventListener('click', minimizeFloating);
 
-function renderOrganized(content) {
-  resultDiv.innerHTML = content || 'Aquí se organizarán tus ideas...';
-  resultDiv.style.opacity = 0;
-  setTimeout(() => {
-    resultDiv.style.opacity = 1;
-  }, 100);
-}
-
 function loadApiKey() {
   const savedKey = localStorage.getItem('openai_api_key');
   if (savedKey) {
@@ -93,14 +73,6 @@ saveApiKeyBtn.addEventListener('click', () => {
   } else {
     alert('Introduce una API Key válida.');
   }
-});
-
-resultDiv.addEventListener('dblclick', () => {
-  resultDiv.style.userSelect = 'text';
-  clearTimeout(selectionTimer);
-  selectionTimer = setTimeout(() => {
-    resultDiv.style.userSelect = 'none';
-  }, 10000);
 });
 
 async function organizeIdea() {
@@ -133,9 +105,9 @@ ${idea}`;
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4-turbo',
         messages: [{ role: 'user', content: fullPrompt }],
-        max_tokens: 1500
+        max_tokens: 4096
       })
     });
 
@@ -146,25 +118,23 @@ ${idea}`;
     console.log('Contenido recibido:', content);
 
     try {
-      const json = JSON.parse(content);
+      const clean = extractJSON(content);
+      const json = JSON.parse(clean);
       console.log('JSON parseado correctamente:', json);
       renderFlow(json);
-      resultDiv.innerHTML = '';
     } catch (e) {
       console.warn('No es un JSON válido, mostrando como texto.');
-      renderOrganized(content);
+      flowContainer.innerHTML = '<p style="color:red;">❌ No se pudo organizar el contenido.</p>';
     }
-    
   } catch (err) {
     alert('❌ Error: ' + err.message);
   }
 }
 
-
 sendBtn.addEventListener('click', organizeIdea);
 clearBtn.addEventListener('click', () => {
   localStorage.removeItem('organizedContent');
-  renderOrganized('');
+  flowContainer.innerHTML = '';
 });
 
 document.addEventListener('keydown', (e) => {
@@ -173,42 +143,8 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-document.addEventListener('mousemove', resetInactivityTimer);
-
-renderOrganized(localStorage.getItem('organizedContent'));
 loadApiKey();
-resetInactivityTimer();
-function renderFlow(json) {
-  flowContainer.innerHTML = ''; // Limpia antes de pintar
 
-  if (!json.nodes || !Array.isArray(json.nodes)) {
-    flowContainer.innerHTML = '<p>❌ No se pudo interpretar el flujo.</p>';
-    return;
-  }
-
-  json.nodes.forEach(node => {
-    const card = document.createElement('div');
-    card.className = 'flow-card';
-
-    const title = document.createElement('h3');
-    title.textContent = node.title;
-
-    const content = document.createElement('p');
-    content.textContent = node.content;
-
-    const next = document.createElement('div');
-    next.className = 'next-steps';
-    if (node.next && node.next.length > 0) {
-      next.textContent = 'Siguiente: ' + node.next.join(', ');
-    }
-
-    card.appendChild(title);
-    card.appendChild(content);
-    card.appendChild(next);
-
-    flowContainer.appendChild(card);
-  });
-}
 function renderFlow(json) {
   flowContainer.innerHTML = ''; // Limpia antes de pintar
 
@@ -249,4 +185,7 @@ function renderFlow(json) {
 
     flowContainer.appendChild(card);
   });
+}function extractJSON(text) {
+  return text.replace(/```json\n?|```/g, '').trim();
 }
+
