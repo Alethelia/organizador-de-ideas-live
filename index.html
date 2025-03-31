@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ordenador de Ideas</title>
+  <title>Organizador de Ideas</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
@@ -33,6 +33,14 @@
       text-align: center;
       font-size: 1.2rem;
       font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 0.5rem;
     }
 
     main {
@@ -41,6 +49,7 @@
       flex-direction: column;
       gap: 1rem;
       flex: 1;
+      position: relative;
     }
 
     .input-group {
@@ -55,29 +64,24 @@
       width: 100%;
     }
 
-    #saveApiKeyBtn {
+    #saveApiKeyBtn, #sendBtn, #clearBtn, #minimizeBtn {
       padding: 0.5rem 1rem;
       border-radius: 8px;
       border: none;
       background: var(--primary-color);
       color: white;
       cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #sendBtn:hover, #clearBtn:hover, #saveApiKeyBtn:hover, #minimizeBtn:hover {
+      background: #3730a3;
     }
 
     #panelContainer {
-      display: flex;
-      gap: 1rem;
       flex: 1;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 0.8rem;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      resize: none;
-      height: 100%;
-      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
     }
 
     #result {
@@ -88,22 +92,7 @@
       border: 1px solid var(--border-color);
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
-    }
-
-    #sendBtn, #clearBtn {
-      padding: 0.5rem;
-      border-radius: 8px;
-      border: none;
-      background: var(--primary-color);
-      color: white;
-      cursor: pointer;
-      width: 100%;
-      margin-top: 0.5rem;
-      transition: background 0.3s ease;
-    }
-
-    #sendBtn:hover, #clearBtn:hover, #saveApiKeyBtn:hover {
-      background: #3730a3;
+      flex: 1;
     }
 
     ul {
@@ -116,6 +105,49 @@
       line-height: 1.4rem;
     }
 
+    .floating-idea {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 999;
+      transition: opacity 0.5s ease, width 0.3s ease, height 0.3s ease;
+    }
+
+    .floating-idea textarea {
+      width: 300px;
+      height: 150px;
+      resize: none;
+    }
+
+    .minimized {
+      width: 50px !important;
+      height: 50px !important;
+      overflow: hidden;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .minimized::after {
+      content: '+';
+      color: white;
+      font-size: 1.5rem;
+      pointer-events: none;
+    }
+
     @media (max-width: 768px) {
       #panelContainer {
         flex-direction: column;
@@ -124,7 +156,13 @@
   </style>
 </head>
 <body>
-  <header>🧩 Ordenador de Ideas</header>
+  <header>
+    📄 Organizador de Ideas
+    <div class="header-buttons">
+      <button id="sendBtn">Organizar (Ctrl + Enter)</button>
+      <button id="clearBtn">Limpiar Todo</button>
+    </div>
+  </header>
   <main>
     <div class="input-group">
       <input id="apiKeyInput" type="password" placeholder="Pega tu OpenAI API Key aquí...">
@@ -133,15 +171,12 @@
     <input id="promptInput" type="text" placeholder="Escribe instrucciones aquí (prompt)...">
 
     <div id="panelContainer">
-      <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-        <textarea id="ideaInput" placeholder="Escribe tu idea aquí..."></textarea>
-        <button id="sendBtn">Organizar (Ctrl + Enter)</button>
-        <button id="clearBtn">Limpiar Todo</button>
-      </div>
+      <div id="result">Aquí se organizarán tus ideas...</div>
+    </div>
 
-      <div style="flex: 1; display: flex; flex-direction: column;">
-        <div id="result">Aquí se organizarán tus ideas...</div>
-      </div>
+    <div class="floating-idea" id="floatingIdea">
+      <textarea id="ideaInput" placeholder="Escribe tu idea aquí..."></textarea>
+      <button id="minimizeBtn">Minimizar</button>
     </div>
   </main>
 
@@ -153,6 +188,58 @@
     const clearBtn = document.getElementById('clearBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    const floatingIdea = document.getElementById('floatingIdea');
+    const minimizeBtn = document.getElementById('minimizeBtn');
+
+    let inactivityTimeout;
+    let isMinimized = false;
+    let drag = false;
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimeout);
+      if (!isMinimized) {
+        inactivityTimeout = setTimeout(() => {
+          minimizeFloating();
+        }, 8000);
+      }
+    }
+
+    function minimizeFloating() {
+      floatingIdea.classList.add('minimized');
+      isMinimized = true;
+    }
+
+    function expandFloating() {
+      floatingIdea.classList.remove('minimized');
+      isMinimized = false;
+      resetInactivityTimer();
+    }
+
+    floatingIdea.addEventListener('mousedown', (e) => {
+      drag = false;
+      let offsetX = e.clientX - floatingIdea.offsetLeft;
+      let offsetY = e.clientY - floatingIdea.offsetTop;
+
+      function mouseMoveHandler(e) {
+        floatingIdea.style.left = `${e.clientX - offsetX}px`;
+        floatingIdea.style.top = `${e.clientY - offsetY}px`;
+        drag = true;
+      }
+
+      function mouseUpHandler() {
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+        if (!drag && isMinimized) {
+          expandFloating();
+        }
+      }
+
+      document.addEventListener('mousemove', mouseMoveHandler);
+      document.addEventListener('mouseup', mouseUpHandler);
+    });
+
+    ideaInput.addEventListener('input', expandFloating);
+    minimizeBtn.addEventListener('click', minimizeFloating);
 
     function renderOrganized(content) {
       resultDiv.innerHTML = content || 'Aquí se organizarán tus ideas...';
@@ -225,8 +312,12 @@
       }
     });
 
+    document.addEventListener('mousemove', resetInactivityTimer);
+    ideaInput.addEventListener('input', resetInactivityTimer);
+
     renderOrganized(localStorage.getItem('organizedContent'));
     loadApiKey();
+    resetInactivityTimer();
   </script>
 </body>
 </html>
