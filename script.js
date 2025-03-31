@@ -8,6 +8,7 @@ const floatingIdea = document.getElementById('floatingIdea');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const minimizedBubble = document.getElementById('minimizedBubble');
 const flowContainer = document.getElementById('flowContainer');
+const loaderBar = document.getElementById('loaderBar');
 
 let drag = false;
 let selectionTimer;
@@ -84,6 +85,7 @@ async function organizeIdea() {
     alert('Escribe tu idea, instrucciones y pega tu API Key');
     return;
   }
+  loaderBar.style.width = '30%'; // empieza a cargar
 
   const fullPrompt = `Organiza de forma detallada y clara el siguiente contenido respetando toda la información, no hagas comentarios fuera del json, sin omitir nada. Devuelve el resultado en formato JSON como este ejemplo:
 {
@@ -113,6 +115,7 @@ ${idea}`;
 
     const data = await response.json();
     console.log('Respuesta completa:', data);
+    loaderBar.style.width = '60%';
 
     const content = data.choices?.[0]?.message?.content || '❌ Error al procesar';
     console.log('Contenido recibido:', content);
@@ -121,6 +124,11 @@ ${idea}`;
       const clean = extractJSON(content);
       const json = JSON.parse(clean);
       console.log('JSON parseado correctamente:', json);
+      loaderBar.style.width = '100%';
+      setTimeout(() => {
+        loaderBar.style.width = '0%';
+      }, 500); // desaparece suavemente
+
       renderFlow(json);
     } catch (e) {
       console.warn('No es un JSON válido, mostrando como texto.');
