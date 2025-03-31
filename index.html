@@ -93,6 +93,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
       flex: 1;
+      user-select: none;
     }
 
     ul {
@@ -111,9 +112,9 @@
       left: 20px;
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 0.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 0.8rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -122,9 +123,15 @@
     }
 
     .floating-idea textarea {
-      width: 300px;
-      height: 150px;
+      width: 280px;
+      height: 120px;
       resize: none;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      padding: 0.5rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
 
     #minimizeBtn {
@@ -138,20 +145,22 @@
 
     .minimized-bubble {
       position: fixed;
-      width: 50px;
-      height: 50px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: var(--primary-color);
+      background: white;
+      border: 2px solid var(--primary-color);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 999;
       cursor: grab;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
 
     .minimized-bubble img {
-      width: 30px;
-      height: 30px;
+      width: 40px;
+      height: 40px;
       pointer-events: none;
     }
 
@@ -205,6 +214,7 @@
 
     let inactivityTimeout;
     let drag = false;
+    let selectionTimer;
 
     function resetInactivityTimer() {
       clearTimeout(inactivityTimeout);
@@ -286,6 +296,14 @@
       } else {
         alert('Introduce una API Key válida.');
       }
+    });
+
+    resultDiv.addEventListener('dblclick', () => {
+      resultDiv.style.userSelect = 'text';
+      clearTimeout(selectionTimer);
+      selectionTimer = setTimeout(() => {
+        resultDiv.style.userSelect = 'none';
+      }, 10000);
     });
 
     async function organizeIdea() {
